@@ -6,12 +6,17 @@ import { useOrderStore } from "@/store/useOrderStore";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { exportOrderAsImage } from "@/lib/utils";
+import { Share2 } from "lucide-react";
 
 export default function Index() {
   const { toast } = useToast();
   const orders = useOrderStore((state) => state.orders);
   const deleteAllOrders = useOrderStore((state) => state.deleteAllOrders);
   const [search, setSearch] = useState("");
+
+  // Track selected order IDs for sharing
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
 
   // Filter out delivered orders and search
   const pendingOrders = orders.filter(order => 
@@ -28,7 +33,35 @@ export default function Index() {
       title: "تم حذف جميع الطلبات",
       description: "تم حذف جميع الطلبات بنجاح",
     });
+    setSelectedOrders([]);
   };
+
+  // Handle selection of a single order
+  const handleSelect = (id: string, checked: boolean) => {
+    setSelectedOrders((prev) =>
+      checked ? [...prev, id] : prev.filter((oid) => oid !== id)
+    );
+  };
+
+  // Share all selected orders as images
+  const handleShareSelected = async () => {
+    if (selectedOrders.length === 0) return;
+    for (const id of selectedOrders) {
+      await exportOrderAsImage(id);
+    }
+    toast({
+      title: "تم مشاركة الطلبات",
+      description: `تم تصدير ${selectedOrders.length} طلب كصور بنجاح`,
+    });
+  };
+
+  // Select or deselect all visible orders
+  const handleToggleSelectAll = (checked: boolean) => {
+    setSelectedOrders(checked ? pendingOrders.map(order => order.id) : []);
+  };
+
+  const allSelected = selectedOrders.length === pendingOrders.length && pendingOrders.length > 0;
+  const someSelected = selectedOrders.length > 0 && selectedOrders.length < pendingOrders.length;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,7 +72,7 @@ export default function Index() {
             <h1 className="text-2xl font-bold text-custom-black">قائمة الطلبات النشطة</h1>
             <p className="text-muted-foreground">إدارة وعرض الطلبات النشطة</p>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto items-center">
             <input
               type="text"
               placeholder="البحث عن طلب..."
@@ -47,29 +80,54 @@ export default function Index() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            {orders.length > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">حذف الكل</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="dialog-content">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      سيتم حذف جميع الطلبات. هذا الإجراء لا يمكن التراجع عنه.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteAll}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      حذف
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            {pendingOrders.length > 0 && (
+              <>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox accent-custom-red"
+                    checked={allSelected}
+                    onChange={(e) => handleToggleSelectAll(e.target.checked)}
+                    ref={el => {
+                      if (el) el.indeterminate = someSelected;
+                    }}
+                    aria-label="اختر الكل"
+                  />
+                  <span className="text-xs">تحديد الكل</span>
+                </label>
+
+                <Button
+                  variant="outline"
+                  onClick={handleShareSelected}
+                  disabled={selectedOrders.length === 0}
+                  className="gap-1"
+                >
+                  <Share2 className="h-4 w-4" />
+                  مشاركة المحدد
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">حذف الكل</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="dialog-content">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        سيتم حذف جميع الطلبات. هذا الإجراء لا يمكن التراجع عنه.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAll}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        حذف
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
           </div>
         </div>
@@ -102,7 +160,13 @@ export default function Index() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingOrders.map((order) => (
-              <OrderCard key={order.id} order={order} />
+              <OrderCard
+                key={order.id}
+                order={order}
+                selectable
+                checked={selectedOrders.includes(order.id)}
+                onCheckChange={(checked) => handleSelect(order.id, checked)}
+              />
             ))}
           </div>
         )}

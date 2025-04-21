@@ -11,9 +11,12 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface OrderCardProps {
   order: Order;
+  selectable?: boolean;
+  checked?: boolean;
+  onCheckChange?: (checked: boolean) => void;
 }
 
-export function OrderCard({ order }: OrderCardProps) {
+export function OrderCard({ order, selectable, checked, onCheckChange }: OrderCardProps) {
   const { toast } = useToast();
   const toggleDelivered = useOrderStore((state) => state.toggleDelivered);
   const deleteOrder = useOrderStore((state) => state.deleteOrder);
@@ -51,9 +54,18 @@ export function OrderCard({ order }: OrderCardProps) {
   };
 
   return (
-    <Card id={`order-${order.id}`} className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+    <Card id={`order-${order.id}`} className="overflow-hidden relative">
+      <CardHeader className="pb-2 flex items-start gap-2">
+        {selectable && (
+          <input
+            type="checkbox"
+            className="form-checkbox accent-custom-red mt-1"
+            checked={!!checked}
+            onChange={(e) => onCheckChange?.(e.target.checked)}
+            aria-label="اختر الطلب"
+          />
+        )}
+        <div className="flex justify-between items-start flex-1">
           <div>
             <CardTitle className="text-lg">{order.customer.name}</CardTitle>
             <CardDescription>{order.customer.phone}</CardDescription>
@@ -139,3 +151,4 @@ export function OrderCard({ order }: OrderCardProps) {
     </Card>
   );
 }
+
