@@ -1,4 +1,3 @@
-
 import { Navbar } from "@/components/Navbar";
 import { OrderCard } from "@/components/OrderCard";
 import { Button } from "@/components/ui/button";
@@ -67,22 +66,27 @@ export default function Index() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 container py-6">
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-custom-black">قائمة الطلبات النشطة</h1>
-            <p className="text-muted-foreground">إدارة وعرض الطلبات النشطة</p>
+        {/* Responsive and spaced controls */}
+        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-center sm:gap-6 px-0 md:px-2">
+          <div className="w-full sm:w-auto">
+            <h1 className="text-2xl font-bold text-custom-black mb-0 sm:mb-1">
+              قائمة الطلبات النشطة
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              إدارة وعرض الطلبات النشطة
+            </p>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto items-center">
-            <input
-              type="text"
-              placeholder="البحث عن طلب..."
-              className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {pendingOrders.length > 0 && (
-              <>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+          {pendingOrders.length > 0 && (
+            <div className="flex flex-col w-full sm:w-auto gap-4 sm:flex-row sm:items-center sm:gap-2">
+              <div className="flex flex-col xs:flex-row gap-3 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="البحث عن طلب..."
+                  className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <label className="flex items-center gap-2 cursor-pointer select-none mt-2 sm:mt-0">
                   <input
                     type="checkbox"
                     className="form-checkbox accent-custom-red"
@@ -95,7 +99,8 @@ export default function Index() {
                   />
                   <span className="text-xs">تحديد الكل</span>
                 </label>
-
+              </div>
+              <div className="flex flex-row gap-2 overflow-auto w-full sm:w-auto mt-1 sm:mt-0">
                 <Button
                   variant="outline"
                   onClick={handleShareSelected}
@@ -127,9 +132,21 @@ export default function Index() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
+          {/* If no orders, just show the search centered */}
+          {pendingOrders.length === 0 && (
+            <div className="w-full max-w-lg mt-4">
+              <input
+                type="text"
+                placeholder="البحث عن طلب..."
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm transition"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         {pendingOrders.length === 0 ? (
